@@ -32,7 +32,7 @@ export default class UserService {
 				},
 				attributes: ['teamId', 'isAdmin']
 			},
-			attributes: ['id', 'name', 'email', 'password']
+			attributes: ['id', 'name', 'email', 'isEmailVerified', 'password']
 		});
 
 		if (!existentUser) {
@@ -47,7 +47,8 @@ export default class UserService {
 			email: existentUser.email,
 			password: existentUser.password,
 			isAdmin: existentUser.member.isAdmin,
-			teamId: existentUser.member.teamId
+			teamId: existentUser.member.teamId,
+			isEmailVerified: existentUser.isEmailVerified
 		};
 	}
 
