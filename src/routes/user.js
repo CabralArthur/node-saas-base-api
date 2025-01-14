@@ -12,7 +12,6 @@ class UserRoutes extends BaseRoutes {
 
 	setup() {
 		this.router.get('/', AdminUserMiddleware.isAuthorized, this.userController.list);
-		this.router.post('/', AdminUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.create), this.userController.create);
 		this.router.get('/info', AdminUserMiddleware.isAuthorized, this.userController.getInfo);
 		this.router.get('/:id', HandleUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.find), this.userController.find);
 		this.router.put('/:id/permissions', AdminUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.updatePermissions), this.userController.updatePermissions);

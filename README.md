@@ -13,10 +13,10 @@ User Permissions Database Diagram:
 [User Permissions Database Diagram](https://drawsql.app/teams/arthur-cabrals-team/diagrams/user-permissions)
 
 ## TODOs
-- [ ] **User Signup**: Implement the functionality for new users to create an account.
-- [ ] **User Login**: Develop the login mechanism for users to access their accounts.
+- [x] **User Signup**: Implement the functionality for new users to create an account.
+- [x] **Verify Email**: Add email verification to ensure the authenticity of user email addresses.
+- [x] **User Login**: Develop the login mechanism for users to access their accounts.
 - [ ] **Reset Password**: Create a feature that allows users to reset their passwords if they forget them.
-- [ ] **Verify Email**: Add email verification to ensure the authenticity of user email addresses.
 - [ ] **Subscription Flow**: Design and implement the subscription flow, including plan selection, payment processing, and subscription management.
     - [ ] **System Integration**: Set the team fields:
           paymentProcessorUserId    String? @unique

@@ -21,6 +21,12 @@ export default class User extends BaseModel {
 				allowNull: false,
 				defaultValue: false,
 				field: 'is_deleted'
+			},
+			isEmailVerified: {
+				type: DataTypes.BOOLEAN,
+				allowNull: false,
+				defaultValue: false,
+				field: 'is_email_verified'
 			}
 		}, {
 			paranoid: false,

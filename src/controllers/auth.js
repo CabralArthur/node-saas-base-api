@@ -7,11 +7,33 @@ class AuthController extends BaseController {
 
 		this.authService = new AuthService();
 		this.login = this.login.bind(this);
+		this.register = this.register.bind(this);
+		this.verifyEmail = this.verifyEmail.bind(this);
 	}
 
 	async login(req, res) {
 		try {
 			const response = await this.authService.login(req.data);
+
+			this.sendSuccess({ data: response, res });
+		} catch (error) {
+			this.sendError({ error, req, res });
+		}
+	}
+
+	async register(req, res) {
+		try {
+			const response = await this.authService.register(req.data);
+
+			this.sendSuccess({ data: response, res });
+		} catch (error) {
+			this.sendError({ error, req, res });
+		}
+	}
+
+	async verifyEmail(req, res) {
+		try {
+			const response = await this.authService.verifyEmail(req.filter);
 
 			this.sendSuccess({ data: response, res });
 		} catch (error) {

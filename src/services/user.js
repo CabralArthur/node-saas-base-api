@@ -8,7 +8,7 @@ import {
 	Permission,
 	PermissionModule
 } from '@models';
-import { ExceptionUtils } from '@utils';
+import { AuthUtils, ExceptionUtils } from '@utils';
 import { LogConstants } from '@constants';
 import httpStatus from 'http-status';
 import { hashSync, compareSync } from 'bcrypt';
@@ -49,63 +49,6 @@ export default class UserService {
 			isAdmin: existentUser.member.isAdmin,
 			teamId: existentUser.member.teamId
 		};
-	}
-
-	isValidPasswordStrength(password = '') {
-		const hasNumber = /\d/.test(password);
-		const hasMinLength = password.length >= 8;
-		const hasUppercaseLetter = /[A-Z]/.test(password);
-		const hasSpecialChar = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(password);
-		const hasPrerequisites = hasNumber && hasMinLength && hasSpecialChar && hasUppercaseLetter;
-
-		return hasPrerequisites;
-	}
-
-	async create({ data, meta }) {
-		const user = await this.getExistentUser(data.email);
-
-		if (user) {
-			throw new ExceptionUtils({
-				status: httpStatus.UNAUTHORIZED,
-				code: 'NOT_PERMISSION',
-				message: 'Invalid user informations.'
-			});
-		}
-
-		if (!this.isValidPasswordStrength(data.password)) {
-			throw new ExceptionUtils({
-				status: httpStatus.UNAUTHORIZED,
-				code: 'INVALID_PASSWORD',
-				message: 'Invalid user password.'
-			});
-		}
-
-		const transaction = await this.database.masterInstance.transaction();
-
-		try {
-			const createdUser = await User.create(data, { transaction, returning: true, raw: true });
-
-			await Member.create({
-				userId: createdUser.id,
-				teamId: meta.teamId,
-				isAdmin: false,
-				creatorId: meta.loggedUserId
-			}, { transaction });
-
-			await UserLog.create({
-				type: LogConstants.CREATE_USER,
-				userId: meta.loggedUserId,
-				teamId: meta.teamId
-			}, { transaction });
-
-			await transaction.commit();
-
-			return true;
-		} catch (error) {
-			await transaction.rollback();
-		}
-
-		return true;
 	}
 
 	async list(filter) {
@@ -256,7 +199,7 @@ export default class UserService {
 
 	valiteIsNewPasswordValid({ data }) {
 		const isChangingPassword = data.oldPassword && data.newPassword;
-		const isInvalidPassword = !this.isValidPasswordStrength(data.newPassword);
+		const isInvalidPassword = !AuthUtils.isValidPasswordStrength(data.newPassword);
 
 		if (isChangingPassword && isInvalidPassword) {
 			throw new ExceptionUtils({

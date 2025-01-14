@@ -11,6 +11,8 @@ class AuthRoutes extends BaseRoutes {
 
 	setup() {
 		this.router.post('/login', this.SchemaValidator.validate(AuthSchema.login), this.authController.login);
+		this.router.post('/register', this.SchemaValidator.validate(AuthSchema.register), this.authController.register);
+		this.router.get('/verify-email', this.SchemaValidator.validate(AuthSchema.verifyEmail), this.authController.verifyEmail);
 
 		return this.router;
 	}
