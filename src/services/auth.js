@@ -4,7 +4,8 @@ import httpStatus from 'http-status';
 import Database from '@database';
 import { UserService, EmailService } from '@services';
 import { AuthUtils, ExceptionUtils } from '@utils';
-import { User, UserRecoverPassword, Team, Member } from '@models';
+import { User, UserRecoverPassword, Team, Member, UserPermission } from '@models';
+import PermissionConstants from '@constants/permission';
 
 export default class AuthService {
 	constructor() {
@@ -35,6 +36,14 @@ export default class AuthService {
 				status: httpStatus.UNAUTHORIZED,
 				code: 'INVALID_CREDENTIALS',
 				message: 'Invalid credentials'
+			});
+		}
+
+		if (!user.isEmailVerified) {
+			throw new ExceptionUtils({
+				status: httpStatus.UNAUTHORIZED,
+				code: 'EMAIL_NOT_VERIFIED',
+				message: 'Email not verified'
 			});
 		}
 
@@ -78,6 +87,17 @@ export default class AuthService {
 				isAdmin: true,
 				creatorId: createdUser.id
 			}, { transaction });
+
+			const { READ, CREATE, UPDATE, DELETE } = PermissionConstants.PERMISSION_MODULE_ID_BY_NAME.TASKS;
+
+			const defaultPermissions = [
+				{ permissionId: READ, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+				{ permissionId: CREATE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+				{ permissionId: UPDATE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+				{ permissionId: DELETE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+			];
+
+			await UserPermission.bulkCreate(defaultPermissions, { transaction });
 
 			await this.sendVerificationEmail(createdUser);
 
@@ -169,7 +189,7 @@ export default class AuthService {
 		}
 	}
 
-	async validateResetPassword({ token }) {
+	async validateResetPassword({ token, options = {} }) {
 		const userRecoverPassword = await UserRecoverPassword.findOne({
 			where: {
 				token,
@@ -186,11 +206,15 @@ export default class AuthService {
 			});
 		}
 
+		if (!options.returnData) {
+			return true;
+		}
+
 		return userRecoverPassword;
 	}
 
 	async resetPassword({ token, password }) {
-		const userRecoverPassword = await this.validateResetPassword({ token });
+		const userRecoverPassword = await this.validateResetPassword({ token, options: { returnData: true } });
 
 		if (!userRecoverPassword) {
 			throw new ExceptionUtils({
