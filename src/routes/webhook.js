@@ -14,4 +14,3 @@ export default class WebhookRoutes extends BaseRoutes {
 		return this.router;
 	}
 }
-
