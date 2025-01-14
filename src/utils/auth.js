@@ -16,6 +16,16 @@ export default class AuthUtils {
 		return token;
 	}
 
+	static isValidPasswordStrength(password = '') {
+		const hasNumber = /\d/.test(password);
+		const hasMinLength = password.length >= 8;
+		const hasUppercaseLetter = /[A-Z]/.test(password);
+		const hasSpecialChar = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(password);
+		const hasPrerequisites = hasNumber && hasMinLength && hasSpecialChar && hasUppercaseLetter;
+
+		return hasPrerequisites;
+	}
+
 	static getTokenData(user) {
 		const dayInMilisseconds = 86400000;
 		const expires = Date.now() + dayInMilisseconds;
