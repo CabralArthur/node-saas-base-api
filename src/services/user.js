@@ -383,4 +383,47 @@ export default class UserService {
 
 		return this.getParsedUserInfoUser(user);
 	}
+
+	async getPermissions(filter) {
+		const user = await User.findOne({
+			where: { id: filter.id },
+			attributes: ['id', 'name', 'email']
+		});
+
+		if (!user) {
+			return {
+				permissions: []
+			};
+		}
+
+		const permissions = await UserPermission.findAll({
+			where: {
+				userId: filter.id,
+				teamId: filter.teamId,
+				isDeleted: false
+			},
+			include: {
+				model: Permission,
+				where: {
+					isDeleted: false
+				},
+				required: false,
+				attributes: ['key'],
+				include: {
+					model: PermissionModule,
+					as: 'module',
+					where: {
+						isDeleted: false
+					},
+					required: false,
+					attributes: ['key']
+				}
+			}
+		});
+
+		return {
+			userId: filter.id,
+			permissions: map(permissions, permission => this.mountUserPermission(permission))
+		};
+	}
 }

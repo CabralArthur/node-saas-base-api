@@ -28,6 +28,18 @@ export default class Subscription extends BaseModel {
 				type: DataTypes.DATE,
 				allowNull: true
 			},
+			createdAt: {
+				field: 'created_at',
+				type: DataTypes.DATE,
+				allowNull: false,
+				defaultValue: DataTypes.NOW
+			},
+			updatedAt: {
+				field: 'updated_at',
+				type: DataTypes.DATE,
+				allowNull: false,
+				defaultValue: DataTypes.NOW
+			},
 			status: {
 				type: DataTypes.STRING,
 				defaultValue: 'TRIAL'

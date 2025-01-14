@@ -14,6 +14,7 @@ class UserController extends BaseController {
 		this.update = this.update.bind(this);
 		this.delete = this.delete.bind(this);
 		this.updatePermissions = this.updatePermissions.bind(this);
+		this.getPermissions = this.getPermissions.bind(this);
 	}
 
 	async updatePermissions(req, res) {
@@ -102,6 +103,16 @@ class UserController extends BaseController {
 			};
 
 			const response = await this.userService.delete(options);
+
+			this.sendSuccess({ data: response, res });
+		} catch (error) {
+			this.sendError({ error, req, res });
+		}
+	}
+
+	async getPermissions(req, res) {
+		try {
+			const response = await this.userPermissionService.getPermissions(req.filter.id);
 
 			this.sendSuccess({ data: response, res });
 		} catch (error) {

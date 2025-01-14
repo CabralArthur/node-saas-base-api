@@ -27,4 +27,25 @@ export default class SubscriptionService {
 
 		return true;
 	}
+
+	async getSubscription(teamId, options = {}) {
+		return await Subscription.findOne({ where: { teamId }, attributes: ['status', 'createdAt', ...(options.extraAttributes || [])] }, { raw: true });
+	}
+
+	async checkout(teamId) {
+		const stripe = new Stripe(process.env.STRIPE_API_KEY);
+		const subscription = await this.getSubscription(teamId, { extraAttributes: ['stripeCustomerId'] });
+
+		const session = await stripe.checkout.sessions.create({
+			customer: subscription.stripeCustomerId,
+			success_url: `${process.env.CLIENT_BASE_URL}/checkout-success`,
+			cancel_url: `${process.env.CLIENT_BASE_URL}/checkout-cancel`,
+			line_items: [{ price: DEFAULT_PLAN.stripeId, quantity: 1 }],
+			mode: 'subscription',
+		});
+
+		return session;
+	}
 }
+
+
