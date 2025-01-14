@@ -26,9 +26,9 @@ export default class UserRecoverPassword extends BaseModel {
 		});
 	}
 
-    static associate(models) {
-        this.belongsTo(models.user, {
-            foreignKey: 'user_id'
-        });
-    }
+	static associate(models) {
+		this.belongsTo(models.user, {
+			foreignKey: 'user_id'
+		});
+	}
 }
