@@ -34,6 +34,11 @@ export default class Subscription extends BaseModel {
 				allowNull: false,
 				defaultValue: DataTypes.NOW
 			},
+			endsAt: {
+				field: 'ends_at',
+				type: DataTypes.DATE,
+				allowNull: true
+			},
 			updatedAt: {
 				field: 'updated_at',
 				type: DataTypes.DATE,

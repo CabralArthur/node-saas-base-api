@@ -45,10 +45,6 @@ module.exports = {
 				type: Sequelize.DATE,
 				allowNull: true
 			},
-			expired_at: {
-				type: Sequelize.DATE,
-				allowNull: true
-			},
 			status: {
 				type: Sequelize.STRING,
 				defaultValue: 'TRIAL'
@@ -69,6 +65,10 @@ module.exports = {
 				type: Sequelize.DATE,
 				allowNull: false,
 				defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+			},
+			ends_at: {
+				type: Sequelize.DATE,
+				allowNull: true
 			},
 			updated_at: {
 				type: Sequelize.DATE,
