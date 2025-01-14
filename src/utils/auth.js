@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { verify, sign } from 'jsonwebtoken';
 
 export default class AuthUtils {
@@ -44,5 +45,9 @@ export default class AuthUtils {
 			token: token,
 			expires: expires
 		};
+	}
+
+	static async generateRandomToken() {
+		return new Promise(resolve => randomBytes(64, (err, buffer) => resolve(buffer.toString('hex'))));
 	}
 }

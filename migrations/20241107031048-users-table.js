@@ -49,42 +49,42 @@ module.exports = {
 					allowNull: false
 				},
 				user_id: {
-                    type: Sequelize.INTEGER,
-                    allowNull: false,
-                    references: {
-                        model: 'users',
-                        key: 'id'
-                    }
-                },
-                team_id: {
-                    type: Sequelize.INTEGER,
-                    allowNull: false,
-                    references: {
-                        model: 'teams',
-                        key: 'id'
-                    }
-                },
-                is_admin: {
-                    type: Sequelize.BOOLEAN,
-                    allowNull: false,
-                    defaultValue: false
-                },
-                creator_id: {
-                    type: Sequelize.INTEGER,
-                    allowNull: false,
-                    references: {
-                        model: 'users',
-                        key: 'id'
-                    }
-                },
-                destroyer_id: {
-                    type: Sequelize.INTEGER,
-                    allowNull: true,
-                    references: {
-                        model: 'users',
-                        key: 'id'
-                    }
-                },
+					type: Sequelize.INTEGER,
+					allowNull: false,
+					references: {
+						model: 'users',
+						key: 'id'
+					}
+				},
+				team_id: {
+					type: Sequelize.INTEGER,
+					allowNull: false,
+					references: {
+						model: 'teams',
+						key: 'id'
+					}
+				},
+				is_admin: {
+					type: Sequelize.BOOLEAN,
+					allowNull: false,
+					defaultValue: false
+				},
+				creator_id: {
+					type: Sequelize.INTEGER,
+					allowNull: false,
+					references: {
+						model: 'users',
+						key: 'id'
+					}
+				},
+				destroyer_id: {
+					type: Sequelize.INTEGER,
+					allowNull: true,
+					references: {
+						model: 'users',
+						key: 'id'
+					}
+				},
 				created_at: {
 					type: Sequelize.DATE,
 					allowNull: false,

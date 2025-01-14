@@ -19,5 +19,10 @@ export default {
 		query: yup.object().shape({
 			token: yup.string().transform(sanitizeValue).required()
 		})
-	}
+	},
+	requestResetPassword: {
+		body: yup.object({
+			email: yup.string().email().transform(sanitizeValue).max(255).required()
+		}).noUnknown()
+	},
 };

@@ -16,22 +16,22 @@ module.exports = {
 					type: Sequelize.STRING,
 					allowNull: false
 				},
-                user_id: {
-                    type: Sequelize.INTEGER,
-                    allowNull: false,
-                    references: {
-                        model: 'users',
-                        key: 'id'
-                    }
-                },
-                team_id: {
-                    type: Sequelize.INTEGER,
-                    allowNull: false,
-                    references: {
-                        model: 'teams',
-                        key: 'id'
-                    }
-                },
+				user_id: {
+					type: Sequelize.INTEGER,
+					allowNull: false,
+					references: {
+						model: 'users',
+						key: 'id'
+					}
+				},
+				team_id: {
+					type: Sequelize.INTEGER,
+					allowNull: false,
+					references: {
+						model: 'teams',
+						key: 'id'
+					}
+				},
 				created_at: {
 					type: Sequelize.DATE,
 					allowNull: false,

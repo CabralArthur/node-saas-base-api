@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
 import { pick } from 'lodash';
-import { User, Team, Member } from '@models';
-import { UserService, EmailService } from '@services';
-import { AuthUtils, ExceptionUtils } from '@utils';
 import httpStatus from 'http-status';
 import Database from '@database';
+import { UserService, EmailService } from '@services';
+import { AuthUtils, ExceptionUtils } from '@utils';
+import { User, UserRecoverPassword, Team, Member } from '@models';
 
 export default class AuthService {
 	constructor() {
@@ -124,5 +124,46 @@ export default class AuthService {
 		});
 
 		return true;
+	}
+
+	async requestResetPassword({ email }) {
+		const user = await this.userService.getExistentUser(email);
+
+		if (!user) {
+			throw new ExceptionUtils({
+				status: httpStatus.NOT_FOUND,
+				code: 'USER_NOT_FOUND',
+				message: 'User not found'
+			});
+		}
+
+		const transaction = await this.database.masterInstance.transaction();
+
+		try {
+			const token = await AuthUtils.generateRandomToken();
+
+			await UserRecoverPassword.create({
+				used: false,
+				token: token,
+				userId: user.id
+			}, { transaction });
+
+			const link = `${process.env.CLIENT_BASE_URL}/reset-password?token=${token}`;
+
+			const emailOptions = {
+				to: user.email,
+				from: process.env.EMAIL_FROM,
+				subject: 'Password Reset Request',
+				text: `To reset your password, click on the link: ${link}`,
+				html: `To reset your password, click on the link: <a href="${link}">Reset Password</a>`
+			};
+
+			await this.emailService.send(emailOptions);
+
+			await transaction.commit();
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
 	}
 }

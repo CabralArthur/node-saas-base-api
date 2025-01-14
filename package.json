@@ -8,7 +8,7 @@
   "scripts": {
     "start": "NODE_ENV=production node build/index.js",
     "start:dev": "NODE_ENV=development nodemon --delay 500ms --inspect --exec babel-node index.js",
-    "lint": "eslint --ext .js ./src",
+    "lint": "eslint --ext .js ./src ./migrations",
     "lint:fix": "yarn lint --fix",
     "build": "yarn build:api",
     "build:api": "babel ./index.js --out-dir ./build && babel ./src --out-dir ./build/src"
