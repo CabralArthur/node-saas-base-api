@@ -11,28 +11,10 @@ class UserController extends BaseController {
 		this.list = this.list.bind(this);
 		this.getInfo = this.getInfo.bind(this);
 		this.find = this.find.bind(this);
-		this.create = this.create.bind(this);
 		this.update = this.update.bind(this);
 		this.delete = this.delete.bind(this);
 		this.updatePermissions = this.updatePermissions.bind(this);
-	}
-
-	async create(req, res) {
-		try {
-			const options = {
-				data: req.data,
-				meta: {
-					loggedUserId: req.auth.id,
-					teamId: req.auth.teamId
-				}
-			};
-
-			const response = await this.userService.create(options);
-
-			this.sendSuccess({ data: response, res });
-		} catch (error) {
-			this.sendError({ error, req, res });
-		}
+		this.getPermissions = this.getPermissions.bind(this);
 	}
 
 	async updatePermissions(req, res) {
@@ -121,6 +103,16 @@ class UserController extends BaseController {
 			};
 
 			const response = await this.userService.delete(options);
+
+			this.sendSuccess({ data: response, res });
+		} catch (error) {
+			this.sendError({ error, req, res });
+		}
+	}
+
+	async getPermissions(req, res) {
+		try {
+			const response = await this.userPermissionService.getPermissions(req.filter.id);
 
 			this.sendSuccess({ data: response, res });
 		} catch (error) {

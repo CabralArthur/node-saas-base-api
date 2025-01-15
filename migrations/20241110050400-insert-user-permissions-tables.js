@@ -110,17 +110,17 @@ module.exports = {
 			await queryInterface.sequelize.query(`
 				INSERT INTO permission_modules(id, name, key)
 				VALUES
-				(DEFAULT, 'Tasks', 'TASKS'),
+				(DEFAULT, 'Tasks', 'TASKS');
 			`, { transaction });
 
 			await queryInterface.sequelize.query(`
 				INSERT INTO permissions(id, name, key, permission_module_id)
 				VALUES
-				-- Fornecedores
+				-- Tasks
 				(DEFAULT, 'View', 'READ', 1),
 				(DEFAULT, 'Create', 'CREATE', 1),
 				(DEFAULT, 'Edit', 'UPDATE', 1),
-				(DEFAULT, 'Remove', 'DELETE', 1),
+				(DEFAULT, 'Remove', 'DELETE', 1);
 			`, { transaction });
 
 			await transaction.commit();

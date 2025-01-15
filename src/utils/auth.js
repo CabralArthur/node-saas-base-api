@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { verify, sign } from 'jsonwebtoken';
 
 export default class AuthUtils {
@@ -14,6 +15,16 @@ export default class AuthUtils {
 		const [, token] = authorization.split(' ');
 
 		return token;
+	}
+
+	static isValidPasswordStrength(password = '') {
+		const hasNumber = /\d/.test(password);
+		const hasMinLength = password.length >= 8;
+		const hasUppercaseLetter = /[A-Z]/.test(password);
+		const hasSpecialChar = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(password);
+		const hasPrerequisites = hasNumber && hasMinLength && hasSpecialChar && hasUppercaseLetter;
+
+		return hasPrerequisites;
 	}
 
 	static getTokenData(user) {
@@ -34,5 +45,9 @@ export default class AuthUtils {
 			token: token,
 			expires: expires
 		};
+	}
+
+	static async generateRandomToken() {
+		return new Promise(resolve => randomBytes(64, (err, buffer) => resolve(buffer.toString('hex'))));
 	}
 }

@@ -36,12 +36,6 @@ module.exports = {
 					defaultValue: false
 				}
 			}, { transaction });
-			
-			await queryInterface.sequelize.query(`
-				INSERT INTO teams(id, name, description, created_at, updated_at, is_deleted)
-				VALUES
-				(DEFAULT, 'Empresa Beta', DEFAULT, DEFAULT, DEFAULT, DEFAULT);
-			`, { transaction });
 
 			await transaction.commit();
 		} catch (error) {

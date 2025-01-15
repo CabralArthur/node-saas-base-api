@@ -2,10 +2,12 @@ import { Router } from 'express';
 import {
 	AuthRoutes,
 	UserRoutes,
+	WebhookRoutes,
+	SubscriptionRoutes
 } from '@routes';
 
 import {
-	AuthMiddleware
+	AuthMiddleware,
 } from '@middlewares';
 
 class Routes {
@@ -13,12 +15,15 @@ class Routes {
 		this.routes = new Router();
 		this.authRoutes = new AuthRoutes();
 		this.userRoutes = new UserRoutes();
+		this.subscriptionRoutes = new SubscriptionRoutes();
+		this.webhookRoutes = new WebhookRoutes();
 	}
 
 	setup() {
 		this.routes.get('/health', (req, res) => res.status(200).send('OK'));
 		this.routes.use('/auth', this.authRoutes.setup());
 		this.routes.use('/user', AuthMiddleware.isAuthorized, this.userRoutes.setup());
+		this.routes.use('/subscription', AuthMiddleware.isAuthorized, this.subscriptionRoutes.setup());
 
 		this.routes.use((error, req, res, next) => {
 			if (error) {
