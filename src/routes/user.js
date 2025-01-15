@@ -11,13 +11,18 @@ class UserRoutes extends BaseRoutes {
 	}
 
 	setup() {
-		this.router.get('/', AdminUserMiddleware.isAuthorized, this.userController.list);
+		// User Info Flows
 		this.router.get('/info', AdminUserMiddleware.isAuthorized, this.userController.getInfo);
-		this.router.get('/:id', HandleUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.find), this.userController.find);
+
+		// User Permission Flows
 		this.router.put('/:id/permissions', AdminUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.updatePermissions), this.userController.updatePermissions);
+		this.router.get('/:id/permissions', AdminUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.find), this.userController.getPermissions);
+
+		// User Update / Find FLows
+		this.router.get('/', AdminUserMiddleware.isAuthorized, this.userController.list);
+		this.router.get('/:id', HandleUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.find), this.userController.find);
 		this.router.put('/:id', HandleUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.update), this.userController.update);
 		this.router.delete('/:id', AdminUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.delete), this.userController.delete);
-
 
 		return this.router;
 	}

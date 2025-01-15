@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import { pick } from 'lodash';
 import httpStatus from 'http-status';
 import Database from '@database';
-import { UserService, EmailService } from '@services';
+import { UserService, EmailService, SubscriptionService } from '@services';
 import { AuthUtils, ExceptionUtils } from '@utils';
 import { User, UserRecoverPassword, Team, Member, UserPermission } from '@models';
 import PermissionConstants from '@constants/permission';
@@ -12,6 +12,7 @@ export default class AuthService {
 		this.database = new Database();
 		this.userService = new UserService();
 		this.emailService = new EmailService();
+		this.subscriptionService = new SubscriptionService();
 	}
 
 	async login({ email, password }) {
@@ -98,6 +99,13 @@ export default class AuthService {
 			];
 
 			await UserPermission.bulkCreate(defaultPermissions, { transaction });
+
+			await this.subscriptionService.subscribeTrial({
+				email: createdUser.email,
+				name: createdUser.name,
+				userId: createdUser.id,
+				teamId: createdTeam.id,
+			}, { transaction });
 
 			await this.sendVerificationEmail(createdUser);
 

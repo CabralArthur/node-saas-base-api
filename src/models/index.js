@@ -1,4 +1,6 @@
 import Team from './team';
+import Subscription from './subscription';
+import Plan from './plan';
 import Member from './member';
 import User from './user';
 import UserLog from './user-log';
@@ -9,6 +11,8 @@ import UserRecoverPassword from './user-recover-password';
 
 export {
 	Team,
+	Subscription,
+	Plan,
 	Member,
 	User,
 	UserLog,
