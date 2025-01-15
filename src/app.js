@@ -7,8 +7,9 @@ import express from 'express';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-
+import WebhookRoutes from './routes/webhook';
 import Routes from './routes';
+
 import Database from './database';
 
 export default class App {
@@ -21,11 +22,13 @@ export default class App {
 		this.databaseModule = new Database();
 		this.port = process.env.PORT || '3000';
 		this.httpServer = http.createServer(this.app);
+		this.webhookRoutes = new WebhookRoutes();
 	}
 
 	async setup() {
 		const routes = new Routes();
 
+		this.app.use('/webhook', express.raw({ type: 'application/json' }), this.webhookRoutes.setup());
 		this.app.use(express.json());
 		this.app.use(express.urlencoded({ extended: false }));
 		this.app.use(cors());

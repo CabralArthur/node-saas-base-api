@@ -59,7 +59,6 @@ export default class WebhookService {
 				break;
 
 			default:
-				console.log('Unhandled event type:', event.type);
 				break;
 		}
 

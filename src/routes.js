@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import express from 'express';
 import {
 	AuthRoutes,
 	UserRoutes,
@@ -24,7 +23,6 @@ class Routes {
 		this.routes.get('/health', (req, res) => res.status(200).send('OK'));
 		this.routes.use('/auth', this.authRoutes.setup());
 		this.routes.use('/user', AuthMiddleware.isAuthorized, this.userRoutes.setup());
-		this.routes.use('/webhook', express.raw({ type: 'application/json' }), this.webhookRoutes.setup());
 		this.routes.use('/subscription', AuthMiddleware.isAuthorized, this.subscriptionRoutes.setup());
 
 		this.routes.use((error, req, res, next) => {
