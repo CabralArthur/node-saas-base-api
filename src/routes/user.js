@@ -12,7 +12,7 @@ class UserRoutes extends BaseRoutes {
 
 	setup() {
 		// User Info Flows
-		this.router.get('/info', AdminUserMiddleware.isAuthorized, this.userController.getInfo);
+		this.router.get('/info', this.userController.getInfo);
 
 		// User Permission Flows
 		this.router.put('/:id/permissions', AdminUserMiddleware.isAuthorized, this.SchemaValidator.validate(UserSchema.updatePermissions), this.userController.updatePermissions);

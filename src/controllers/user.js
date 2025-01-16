@@ -63,8 +63,9 @@ class UserController extends BaseController {
 
 	async getInfo(req, res) {
 		try {
-			const response = await this.userService.getInfo({
+			const response = await this.userService.info({
 				id: req.auth.id,
+				teamId: req.auth.teamId
 			});
 
 			this.sendSuccess({ data: response, res });
