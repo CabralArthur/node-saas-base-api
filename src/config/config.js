@@ -1,12 +1,6 @@
 require('dotenv').config();
 
 module.exports = {
-	config: {
-		sendGrid: {
-			key: 'apiKey',
-			domain: ''
-		}
-	},
 	databases: {
 		dialect: 'postgres',
 		master: {
@@ -28,5 +22,30 @@ module.exports = {
 		expires_in_seconds: {
 			default: process.env.AWS_S3_EXPIRES_IN_SECONDS_DEFAULT || 604800
 		}
+	},
+	app: {
+		secretKey: process.env.APP_SECRET_KEY,
+		port: process.env.PORT || 3000,
+		env: process.env.NODE_ENV || 'development'
+	},
+	sendGrid: {
+		key: process.env.SENDGRID_API_KEY,
+		domain: process.env.EMAIL_FROM
+	},
+	email: {
+		from: process.env.EMAIL_FROM,
+		host: process.env.EMAIL_HOST,
+		port: process.env.EMAIL_PORT,
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASSWORD
+		}
+	},
+	client: {
+		baseUrl: process.env.CLIENT_BASE_URL
+	},
+	stripe: {
+		apiKey: process.env.STRIPE_API_KEY,
+		webhookSecret: process.env.STRIPE_WEBHOOK_SECRET
 	}
 };

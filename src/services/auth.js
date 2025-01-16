@@ -6,6 +6,7 @@ import { UserService, EmailService, SubscriptionService } from '@services';
 import { AuthUtils, ExceptionUtils } from '@utils';
 import { User, UserRecoverPassword, Team, Member, UserPermission } from '@models';
 import PermissionConstants from '@constants/permission';
+import config from '../config/config';
 
 export default class AuthService {
 	constructor() {
@@ -123,17 +124,17 @@ export default class AuthService {
 
 		const emailOptions = {
 			to: user.email,
-			from: process.env.EMAIL_FROM,
+			from: config.email.from,
 			subject: 'Account Verification',
-			text: `To verify your account, click on the link: ${process.env.CLIENT_BASE_URL}/verify-email?token=${token}`,
-			html: `To verify your account, click on the link: <a href="${process.env.CLIENT_BASE_URL}/verify-email?token=${token}">Verify Account</a>`
+			text: `To verify your account, click on the link: ${config.client.baseUrl}/verify-email?token=${token}`,
+			html: `To verify your account, click on the link: <a href="${config.client.baseUrl}/verify-email?token=${token}">Verify Account</a>`
 		};
 
 		this.emailService.send(emailOptions);
 	}
 
 	async verifyEmail({ token }) {
-		const decodedToken = AuthUtils.decodeData(token, process.env.APP_SECRET_KEY);
+		const decodedToken = AuthUtils.decodeData(token, config.app.secretKey);
 
 		if (!decodedToken) {
 			throw new ExceptionUtils({
@@ -176,11 +177,11 @@ export default class AuthService {
 				userId: user.id
 			}, { transaction });
 
-			const link = `${process.env.CLIENT_BASE_URL}/reset-password/${token}`;
+			const link = `${config.client.baseUrl}/reset-password/${token}`;
 
 			const emailOptions = {
 				to: user.email,
-				from: process.env.EMAIL_FROM,
+				from: config.email.from,
 				subject: 'Password Reset Request',
 				text: `To reset your password, click on the link: ${link}`,
 				html: `To reset your password, click on the link: <a href="${link}">Reset Password</a>`

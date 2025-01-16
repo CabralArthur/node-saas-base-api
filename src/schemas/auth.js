@@ -45,7 +45,7 @@ export default {
 				.test('passwords-match', 'Passwords must match', function(value) {
 					return value === this.parent.password;
 				}),
-			token: yup.string().transform(sanitizeValue).required()
+			token: yup.string().required()
 		}).noUnknown()
 	}
 };

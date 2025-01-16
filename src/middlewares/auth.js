@@ -1,5 +1,5 @@
 import { AuthUtils } from '@utils';
-
+import config from '../config/config';
 export default class AuthMiddleware {
 	static isAuthorized(req, res, next) {
 		const errorResponse = {
@@ -9,7 +9,7 @@ export default class AuthMiddleware {
 		};
 
 		const token = AuthUtils.getBearerToken(req);
-		const decodedToken = AuthUtils.decodeData(token, process.env.APP_SECRET_KEY);
+		const decodedToken = AuthUtils.decodeData(token, config.app.secretKey);
 
 		if (!decodedToken || !decodedToken.user || !decodedToken.user.id) {
 			res.status(403).json(errorResponse);
