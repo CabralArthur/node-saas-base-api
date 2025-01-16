@@ -50,6 +50,7 @@ export default class WebhookService {
 					await Subscription.update({
 						status: 'CANCELED',
 						canceledAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+						endsAt: dayjs().format('YYYY-MM-DD HH:mm:ss')
 					}, {
 						where: {
 							stripeCustomerId: event.data.object.customer
