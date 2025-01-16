@@ -12,7 +12,13 @@ export default {
 		body: yup.object().shape({
 			name: yup.string().transform(sanitizeValue).required(),
 			email: yup.string().transform(sanitizeValue).email().required(),
-			password: yup.string().transform(sanitizeValue).required()
+			password: yup.string().transform(sanitizeValue).required(),
+			confirmPassword: yup.string()
+				.transform(sanitizeValue)
+				.required()
+				.test('passwords-match', 'Passwords must match', function(value) {
+					return value === this.parent.password;
+				})
 		})
 	},
 	verifyEmail: {

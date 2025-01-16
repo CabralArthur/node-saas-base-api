@@ -176,7 +176,7 @@ export default class AuthService {
 				userId: user.id
 			}, { transaction });
 
-			const link = `${process.env.CLIENT_BASE_URL}/reset-password?token=${token}`;
+			const link = `${process.env.CLIENT_BASE_URL}/reset-password/${token}`;
 
 			const emailOptions = {
 				to: user.email,
