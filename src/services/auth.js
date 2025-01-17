@@ -22,6 +22,14 @@ export default class AuthService {
 
 		let user = await this.userService.getExistentUser(email);
 
+		if (!user.isEmailVerified) {
+			throw new ExceptionUtils({
+				status: httpStatus.UNAUTHORIZED,
+				code: 'EMAIL_NOT_VERIFIED',
+				message: 'Please verify your email before logging in.'
+			});
+		}
+
 		if (!user || !user.teamId) {
 			isFakeUser = true;
 
