@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 import { verify, sign } from 'jsonwebtoken';
+import config from '../config/config';
 
 export default class AuthUtils {
 	static decodeData(token, key) {
@@ -39,7 +40,7 @@ export default class AuthUtils {
 				isAdmin: user.isAdmin,
 				teamId: user.teamId
 			}
-		}, process.env.APP_SECRET_KEY);
+		}, config.app.secretKey);
 
 		return {
 			token: token,

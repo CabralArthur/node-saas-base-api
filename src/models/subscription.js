@@ -23,11 +23,6 @@ export default class Subscription extends BaseModel {
 				type: DataTypes.DATE,
 				allowNull: true
 			},
-			expiredAt: {
-				field: 'expired_at',
-				type: DataTypes.DATE,
-				allowNull: true
-			},
 			createdAt: {
 				field: 'created_at',
 				type: DataTypes.DATE,

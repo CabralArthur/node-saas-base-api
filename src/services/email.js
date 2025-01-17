@@ -1,8 +1,9 @@
 import SendGrid from '@sendgrid/mail';
+import config from '../config/config';
 
 export default class EmailService {
 	constructor() {
-		SendGrid.setApiKey(process.env.SENDGRID_API_KEY);
+		SendGrid.setApiKey(config.sendGrid.key);
 	}
 
 	async send(sendEmailOptions) {

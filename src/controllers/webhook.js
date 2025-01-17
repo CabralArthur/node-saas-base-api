@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import BaseController from './base';
 import { WebhookService } from '@services';
+import config from '../config/config';
 
 class WebhookController extends BaseController {
 	constructor() {
@@ -8,12 +9,12 @@ class WebhookController extends BaseController {
 
 		this.webhookService = new WebhookService();
 		this.handle = this.handle.bind(this);
-		this.stripe = new Stripe(process.env.STRIPE_API_KEY);
+		this.stripe = new Stripe(config.stripe.apiKey);
 	}
 
 	async handle(req, res) {
 		try {
-			const event = this.stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET);
+			const event = this.stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], config.stripe.webhookSecret);
 
 			const response = await this.webhookService.handle(event);
 
