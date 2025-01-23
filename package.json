@@ -1,5 +1,5 @@
 {
-  "name": "utmizer-api",
+  "name": "node-saas-base-api",
   "main": "index.js",
   "version": "0.0.0",
   "description": "## Description This project is a base API for a Software as a Service (SaaS) application built with Node.js. It provides a starting point for developing scalable and maintainable SaaS applications.",
