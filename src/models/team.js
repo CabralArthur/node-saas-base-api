@@ -29,4 +29,9 @@ export default class Team extends BaseModel {
 			updatedAt: 'updated_at',
 		});
 	}
+
+	static associate(models) {
+		this.hasMany(models.member, { foreignKey: 'team_id' });
+		this.hasOne(models.subscription, { foreignKey: 'team_id' });
+	}
 }

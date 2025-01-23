@@ -46,4 +46,9 @@ export default class Member extends BaseModel {
 			updatedAt: 'updated_at',
 		});
 	}
+
+	static associate(models) {
+		this.belongsTo(models.team, { foreignKey: 'team_id' });
+		this.belongsTo(models.user, { foreignKey: 'user_id' });
+	}
 }

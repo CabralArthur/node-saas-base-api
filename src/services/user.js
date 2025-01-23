@@ -3,19 +3,35 @@ import { get, map } from 'lodash';
 import {
 	User,
 	Member,
+	Subscription,
 	UserLog,
 	UserPermission,
 	Permission,
-	PermissionModule
+	PermissionModule,
+	Team
 } from '@models';
-import { AuthUtils, ExceptionUtils } from '@utils';
+import { ExceptionUtils } from '@utils';
 import { LogConstants } from '@constants';
 import httpStatus from 'http-status';
 import { hashSync, compareSync } from 'bcrypt';
+import { PermissionConstants } from '@constants';
 
 export default class UserService {
 	constructor() {
 		this.database = new Database();
+	}
+
+	mountPermissionsToCreate({ permissions, filter }) {
+		return permissions.map(permission => {
+			const permissionId = PermissionConstants.PERMISSION_MODULE_ID_BY_NAME[permission.module]?.[permission.name];
+
+			return {
+				permissionId,
+				userId: filter.userId,
+				teamId: filter.teamId,
+				creatorId: filter.loggedUserId
+			};
+		});
 	}
 
 	async getExistentUser(userEmail) {
@@ -52,32 +68,94 @@ export default class UserService {
 		};
 	}
 
-	async list(filter) {
-		const users = await User.findAll({
-			where: {
-				isDeleted: false
-			},
-			include: {
-				model: Member,
+	async create(data) {
+		const transaction = await this.database.masterInstance.transaction();
+
+		try {
+			let user = await User.findOne({
 				where: {
-					teamId: filter.teamId,
-					isDeleted: false
-				},
-				attributes: ['isAdmin']
-			},
-			attributes: ['id', 'name', 'email']
-		});
+					email: data.email,
+					is_deleted: false
+				}
+			});
 
-		return map(users, user => {
-			user = user.get({ plain: true });
+			// Check if member already exists for this team
+			if (user) {
+				const existingMember = await Member.findOne({
+					where: {
+						teamId: data.team_id,
+						userId: user.id,
+						isDeleted: false
+					}
+				});
 
-			return {
-				id: user.id,
-				name: user.name,
-				email: user.email,
-				isAdmin: user.member.isAdmin
-			};
-		});
+				if (existingMember) {
+					throw new ExceptionUtils({
+						status: httpStatus.CONFLICT,
+						code: 'USER_ALREADY_EXISTS',
+						message: 'User is already a member of this team'
+					});
+				}
+			} else {
+				// Create new user if doesn't exist
+				user = await User.create({
+					name: data.name,
+					email: data.email,
+					password: data.password,
+					is_deleted: false,
+					activeTeamId: data.team_id
+				}, { transaction });
+			}
+
+			// Create team membership
+			await Member.create({
+				teamId: data.team_id,
+				userId: user.id,
+				isAdmin: false,
+				isDeleted: false,
+				creatorId: data.logged_user_id
+			}, { transaction });
+
+			// Grant default module permissions
+			// const memberPermissions = [{
+			// 	module: PermissionConstants.PERMISSION_MODULES.DEFAULT,
+			// 	name: PermissionConstants.PERMISSIONS.CREATE
+			// }, {
+			// 	module: PermissionConstants.PERMISSION_MODULES.DEFAULT,
+			// 	name: PermissionConstants.PERMISSIONS.READ
+			// }, {
+			// 	module: PermissionConstants.PERMISSION_MODULES.DEFAULT,
+			// 	name: PermissionConstants.PERMISSIONS.UPDATE
+			// }, {
+			// 	module: PermissionConstants.PERMISSION_MODULES.DEFAULT,
+			// 	name: PermissionConstants.PERMISSIONS.DELETE
+			// }];
+
+			// const permissionsToCreate = this.mountPermissionsToCreate({
+			// 	permissions: memberPermissions,
+			// 	filter: {
+			// 		userId: user.id,
+			// 		teamId: data.team_id,
+			// 		loggedUserId: data.logged_user_id
+			// 	}
+			// });
+
+			// await UserPermission.bulkCreate(permissionsToCreate, { transaction });
+
+			await UserLog.create({
+				type: LogConstants.CREATE_USER,
+				userId: data.logged_user_id,
+				teamId: data.team_id,
+				targetUserId: user.id
+			}, { transaction });
+
+			await transaction.commit();
+
+			return user;
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
 	}
 
 	async find(filter, options) {
@@ -183,7 +261,7 @@ export default class UserService {
 	async validateIsEmailChangeValid({ data, user }) {
 		const isChangingEmail = user.email !== data.email;
 
-		if (isChangingEmail) {
+		if (data.email && isChangingEmail) {
 			const user = await this.getExistentUser(data.email);
 
 			if (user) {
@@ -200,14 +278,9 @@ export default class UserService {
 
 	valiteIsNewPasswordValid({ data }) {
 		const isChangingPassword = data.oldPassword && data.newPassword;
-		const isInvalidPassword = !AuthUtils.isValidPasswordStrength(data.newPassword);
 
-		if (isChangingPassword && isInvalidPassword) {
-			throw new ExceptionUtils({
-				status: httpStatus.BAD_REQUEST,
-				code: 'INVALID_PASSWORD',
-				message: 'Invalid user password.'
-			});
+		if (!isChangingPassword) {
+			return true;
 		}
 
 		const isSamePassword = data.newPassword && (data.oldPassword === data.newPassword);
@@ -233,6 +306,34 @@ export default class UserService {
 		this.valiteIsNewPasswordValid({ data });
 
 		return true;
+	}
+
+	async list(filter) {
+		const users = await User.findAll({
+			where: {
+				isDeleted: false
+			},
+			include: {
+				model: Member,
+				where: {
+					teamId: filter.teamId,
+					isDeleted: false
+				},
+				attributes: ['isAdmin']
+			},
+			attributes: ['id', 'name', 'email']
+		});
+
+		return map(users, user => {
+			user = user.get({ plain: true });
+
+			return {
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				isAdmin: user.member.isAdmin
+			};
+		});
 	}
 
 	async update({ id, data, meta }) {
@@ -290,6 +391,7 @@ export default class UserService {
 				destroyerId: meta.loggedUserId
 			}, {
 				where: {
+					teamId: meta.teamId,
 					userId: id,
 					isDeleted: false
 				},
@@ -328,6 +430,10 @@ export default class UserService {
 			name: user.name,
 			email: user.email,
 			isAdmin: user.member.isAdmin,
+			team: {
+				name: user.member.team.name,
+				plan_status: user.member.team.subscription.status
+			},
 			permissions: map(user.permissions, permission => this.mountUserPermission(permission))
 		};
 	}
@@ -344,6 +450,14 @@ export default class UserService {
 					userId: filter.id,
 					teamId: filter.teamId,
 					isDeleted: false
+				},
+				include: {
+					model: Team,
+					attributes: ['name'],
+					include: {
+						model: Subscription,
+						attributes: ['status']
+					}
 				},
 				attributes: ['isAdmin']
 			}, {
@@ -384,9 +498,9 @@ export default class UserService {
 		return this.getParsedUserInfoUser(user);
 	}
 
-	async getPermissions(filter) {
+	async getPermissions(id, teamId) {
 		const user = await User.findOne({
-			where: { id: filter.id },
+			where: { id },
 			attributes: ['id', 'name', 'email']
 		});
 
@@ -398,8 +512,8 @@ export default class UserService {
 
 		const permissions = await UserPermission.findAll({
 			where: {
-				userId: filter.id,
-				teamId: filter.teamId,
+				userId: id,
+				teamId,
 				isDeleted: false
 			},
 			include: {
@@ -422,7 +536,7 @@ export default class UserService {
 		});
 
 		return {
-			userId: filter.id,
+			userId: id,
 			permissions: map(permissions, permission => this.mountUserPermission(permission))
 		};
 	}

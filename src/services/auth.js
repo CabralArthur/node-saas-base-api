@@ -22,14 +22,6 @@ export default class AuthService {
 
 		let user = await this.userService.getExistentUser(email);
 
-		if (!user.isEmailVerified) {
-			throw new ExceptionUtils({
-				status: httpStatus.UNAUTHORIZED,
-				code: 'EMAIL_NOT_VERIFIED',
-				message: 'Please verify your email before logging in.'
-			});
-		}
-
 		if (!user || !user.teamId) {
 			isFakeUser = true;
 
@@ -49,14 +41,6 @@ export default class AuthService {
 			});
 		}
 
-		if (!user.isEmailVerified) {
-			throw new ExceptionUtils({
-				status: httpStatus.UNAUTHORIZED,
-				code: 'EMAIL_NOT_VERIFIED',
-				message: 'Email not verified'
-			});
-		}
-
 		return AuthUtils.getTokenData(pick(user, ['id', 'name', 'email', 'isAdmin', 'teamId']));
 	}
 
@@ -71,25 +55,17 @@ export default class AuthService {
 			});
 		}
 
-		if (!AuthUtils.isValidPasswordStrength(data.password)) {
-			throw new ExceptionUtils({
-				status: httpStatus.UNAUTHORIZED,
-				code: 'INVALID_PASSWORD',
-				message: 'Invalid user password.'
-			});
-		}
-
 		const transaction = await this.database.masterInstance.transaction();
 
 		try {
-			const createdUser = await User.create(data, { transaction, returning: true, raw: true });
-
 			const createdTeam = await Team.create({
-				name: `${createdUser.name}'s Team`,
-				description: `Team of ${createdUser.name}`,
+				name: `${data.name}'s Team`,
+				description: `Team of ${data.name}`,
 			}, {
 				transaction
 			});
+
+			const createdUser = await User.create({...data, activeTeamId: createdTeam.id }, { transaction, returning: true, raw: true });
 
 			await Member.create({
 				userId: createdUser.id,
@@ -98,16 +74,18 @@ export default class AuthService {
 				creatorId: createdUser.id
 			}, { transaction });
 
-			const { READ, CREATE, UPDATE, DELETE } = PermissionConstants.PERMISSION_MODULE_ID_BY_NAME.TASKS;
+            // TODO: Add permissions to the default section
 
-			const defaultPermissions = [
-				{ permissionId: READ, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
-				{ permissionId: CREATE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
-				{ permissionId: UPDATE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
-				{ permissionId: DELETE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
-			];
+			// const { READ, CREATE, UPDATE, DELETE } = PermissionConstants.PERMISSION_MODULE_ID_BY_NAME.WEBSITE;
 
-			await UserPermission.bulkCreate(defaultPermissions, { transaction });
+			// const defaultPermissions = [
+			// 	{ permissionId: READ, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+			// 	{ permissionId: CREATE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+			// 	{ permissionId: UPDATE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+			// 	{ permissionId: DELETE, userId: createdUser.id, creatorId: createdUser.id, teamId: createdTeam.id },
+			// ];
+
+			// await UserPermission.bulkCreate(defaultPermissions, { transaction });
 
 			await this.subscriptionService.subscribeTrial({
 				email: createdUser.email,
@@ -115,8 +93,6 @@ export default class AuthService {
 				userId: createdUser.id,
 				teamId: createdTeam.id,
 			}, { transaction });
-
-			await this.sendVerificationEmail(createdUser);
 
 			await transaction.commit();
 
@@ -134,8 +110,8 @@ export default class AuthService {
 			to: user.email,
 			from: config.email.from,
 			subject: 'Account Verification',
-			text: `To verify your account, click on the link: ${config.client.baseUrl}/verify-email?token=${token}`,
-			html: `To verify your account, click on the link: <a href="${config.client.baseUrl}/verify-email?token=${token}">Verify Account</a>`
+			text: `To verify your account, click on the link: ${config.client.baseUrl}/verify-email/${token}`,
+			html: `To verify your account, click on the link: <a href="${config.client.baseUrl}/verify-email/${token}">Verify Account</a>`
 		};
 
 		this.emailService.send(emailOptions);
@@ -238,14 +214,6 @@ export default class AuthService {
 				status: httpStatus.NOT_FOUND,
 				code: 'USER_NOT_FOUND',
 				message: 'User not found'
-			});
-		}
-
-		if (!AuthUtils.isValidPasswordStrength(password)) {
-			throw new ExceptionUtils({
-				status: httpStatus.UNAUTHORIZED,
-				code: 'INVALID_PASSWORD',
-				message: 'Invalid user password.'
 			});
 		}
 

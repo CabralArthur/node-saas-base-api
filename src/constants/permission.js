@@ -1,25 +1,29 @@
 const MODULE_ID_BY_NAME = {
-	TASKS: 1
+    // TODO: Add tasks module
 };
 
 const PERMISSIONS = {
 	READ: 'READ',
 	UPDATE: 'UPDATE',
 	DELETE: 'DELETE',
-	CREATE: 'CREATE',
+	CREATE: 'CREATE'
 };
 
 const PERMISSION_MODULE_ID_BY_NAME = {
-	TASKS: {
-		READ: 1,
-		CREATE: 2,
-		UPDATE: 3,
-		DELETE: 4,
-	}
+	// TODO: Add tasks module
+    // Example:
+    // TASKS: {
+    //     READ: 1,
+    //     CREATE: 2,
+    //     UPDATE: 3,
+    //     DELETE: 4
+    // },
 };
 
 const PERMISSION_MODULES = {
-	TASKS: 'TASKS'
+	// TODO: Add tasks module
+    // Example:
+    // TASKS: 'TASKS',
 };
 
 export default {

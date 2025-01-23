@@ -66,10 +66,6 @@ export default class Utils {
 		return `${ean}${base - total}`;
 	}
 
-	static getLikeValue(value) {
-		return `%${(value || '').replace(/'/g, `${''}''`)}%`;
-	}
-
 	static getPaginationOptions = (page, itemsPerPage) => {
 		page = ~~page || 1;
 

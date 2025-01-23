@@ -27,6 +27,11 @@ export default class User extends BaseModel {
 				allowNull: false,
 				defaultValue: false,
 				field: 'is_email_verified'
+			},
+			activeTeamId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
+				field: 'active_team_id'
 			}
 		}, {
 			paranoid: false,
@@ -47,6 +52,14 @@ export default class User extends BaseModel {
 
 	static associate(models) {
 		this.hasOne(models.member, {
+			foreignKey: 'user_id'
+		});
+
+		this.belongsTo(models.team, {
+			foreignKey: 'active_team_id'
+		});
+
+		this.hasMany(models.member, {
 			foreignKey: 'user_id'
 		});
 

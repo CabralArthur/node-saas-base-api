@@ -3,11 +3,12 @@ import {
 	AuthRoutes,
 	UserRoutes,
 	WebhookRoutes,
-	SubscriptionRoutes
+	SubscriptionRoutes,
+	TeamRoutes
 } from '@routes';
 
 import {
-	AuthMiddleware,
+	AuthMiddleware
 } from '@middlewares';
 
 class Routes {
@@ -17,6 +18,7 @@ class Routes {
 		this.userRoutes = new UserRoutes();
 		this.subscriptionRoutes = new SubscriptionRoutes();
 		this.webhookRoutes = new WebhookRoutes();
+		this.teamRoutes = new TeamRoutes();
 	}
 
 	setup() {
@@ -24,6 +26,7 @@ class Routes {
 		this.routes.use('/auth', this.authRoutes.setup());
 		this.routes.use('/user', AuthMiddleware.isAuthorized, this.userRoutes.setup());
 		this.routes.use('/subscription', AuthMiddleware.isAuthorized, this.subscriptionRoutes.setup());
+		this.routes.use('/team', AuthMiddleware.isAuthorized, this.teamRoutes.setup());
 
 		this.routes.use((error, req, res, next) => {
 			if (error) {

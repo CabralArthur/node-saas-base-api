@@ -46,6 +46,11 @@ module.exports = {
 	},
 	stripe: {
 		apiKey: process.env.STRIPE_API_KEY,
-		webhookSecret: process.env.STRIPE_WEBHOOK_SECRET
+		webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+		MONTHLY: process.env.MONTHLY_PLAN_STRIPE_ID,
+		YEARLY: process.env.YEARLY_PLAN_STRIPE_ID,
+		MONTHLY_DB_PLAN_ID: +process.env.MONTHLY_DB_PLAN_ID,
+		YEARLY_DB_PLAN_ID: +process.env.YEARLY_DB_PLAN_ID
 	}
 };
+

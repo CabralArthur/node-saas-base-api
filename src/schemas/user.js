@@ -4,12 +4,17 @@ import * as yup from 'yup';
 export default {
 	create: {
 		body: yup.object().shape({
-			name: yup.string().transform(sanitizeValue).required(),
-			email: yup.string().transform(sanitizeValue).email().required(),
-			password: yup.string().transform(sanitizeValue).required()
+			name: yup.string().required(),
+			email: yup.string().email().required(),
+			password: yup.string().min(6).required()
 		})
 	},
 	find: {
+		params: yup.object().shape({
+			id: yup.string().transform(sanitizeValue).required()
+		})
+	},
+	getPermissions: {
 		params: yup.object().shape({
 			id: yup.string().transform(sanitizeValue).required()
 		})

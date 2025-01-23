@@ -13,8 +13,23 @@ class UserController extends BaseController {
 		this.find = this.find.bind(this);
 		this.update = this.update.bind(this);
 		this.delete = this.delete.bind(this);
+		this.create = this.create.bind(this);
 		this.updatePermissions = this.updatePermissions.bind(this);
 		this.getPermissions = this.getPermissions.bind(this);
+	}
+
+	async create(req, res) {
+		try {
+			const user = await this.userService.create({
+				...req.data,
+				team_id: req.auth.teamId,
+				logged_user_id: req.auth.id
+			});
+
+			this.sendSuccess({ res, data: user });
+		} catch (error) {
+			this.sendError({ error, res });
+		}
 	}
 
 	async updatePermissions(req, res) {
@@ -113,7 +128,7 @@ class UserController extends BaseController {
 
 	async getPermissions(req, res) {
 		try {
-			const response = await this.userPermissionService.getPermissions(req.filter.id);
+			const response = await this.userService.getPermissions(req.filter.id, req.auth.teamId);
 
 			this.sendSuccess({ data: response, res });
 		} catch (error) {

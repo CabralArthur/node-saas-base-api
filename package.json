@@ -1,7 +1,7 @@
 {
-  "name": "node-saas-base-api",
+  "name": "utmizer-api",
   "main": "index.js",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "## Description This project is a base API for a Software as a Service (SaaS) application built with Node.js. It provides a starting point for developing scalable and maintainable SaaS applications.",
   "author": "Arthur Cabral <63428806+CabralArthur@users.noreply.github.com>",
   "license": "MIT",
@@ -9,9 +9,12 @@
     "start": "NODE_ENV=production node build/index.js",
     "start:dev": "NODE_ENV=development nodemon --delay 500ms --inspect --exec babel-node index.js",
     "lint": "eslint --ext .js ./src ./migrations",
-    "lint:fix": "yarn lint --fix",
-    "build": "yarn build:api",
+    "lint:fix": "npm run lint --fix",
+    "build": "npm run build:api",
     "build:api": "babel ./index.js --out-dir ./build && babel ./src --out-dir ./build/src"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@casl/ability": "^6.7.2",

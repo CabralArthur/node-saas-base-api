@@ -5,7 +5,7 @@ import { ExceptionUtils } from '@utils';
 import { UserService } from '@services';
 import { LogConstants } from '@constants';
 import { UserLog, UserPermission } from '@models';
-import { MODULE_ID_BY_NAME, PERMISSION_MODULE_ID_BY_NAME, PERMISSIONS } from '../constants/permission';
+import { PermissionConstants } from '@constants';
 
 export default class UserPermissionService {
 	constructor() {
@@ -15,8 +15,8 @@ export default class UserPermissionService {
 
 	mountActivePermissionsByModule(permissions) {
 		return permissions.reduce((acc, permission) => {
-			const permissionModuleId = MODULE_ID_BY_NAME[permission.module];
-			const permissionId = PERMISSION_MODULE_ID_BY_NAME[permission.module]?.[permission.name];
+			const permissionModuleId = PermissionConstants.MODULE_ID_BY_NAME[permission.module];
+			const permissionId = PermissionConstants.PERMISSION_MODULE_ID_BY_NAME[permission.module]?.[permission.name];
 
 			if (!permissionId || !permissionModuleId) {
 				return acc;
@@ -38,16 +38,16 @@ export default class UserPermissionService {
 		const activePermissionsByModule = this.mountActivePermissionsByModule(permissions);
 
 		const hasInvalidPermission = permissions.some(permission => {
-			const permissionModuleId = MODULE_ID_BY_NAME[permission.module];
-			const permissionId = PERMISSION_MODULE_ID_BY_NAME[permission.module]?.[permission.name];
+			const permissionModuleId = PermissionConstants.MODULE_ID_BY_NAME[permission.module];
+			const permissionId = PermissionConstants.PERMISSION_MODULE_ID_BY_NAME[permission.module]?.[permission.name];
 
 			if (!permissionId || !permissionModuleId) {
 				return true;
 			}
 
-			const hasReadPermission = activePermissionsByModule[permission.module]?.[PERMISSIONS.READ];
+			const hasReadPermission = activePermissionsByModule[permission.module]?.[PermissionConstants.PERMISSIONS.READ];
 
-			if (permission.name !== PERMISSIONS.READ && !hasReadPermission) {
+			if (permission.name !== PermissionConstants.PERMISSIONS.READ && !hasReadPermission) {
 				return true;
 			}
 
@@ -67,7 +67,7 @@ export default class UserPermissionService {
 
 	mountPermissionsToCreate({ permissions, filter }) {
 		return permissions.map(permission => {
-			const permissionId = PERMISSION_MODULE_ID_BY_NAME[permission.module]?.[permission.name];
+			const permissionId = PermissionConstants.PERMISSION_MODULE_ID_BY_NAME[permission.module]?.[permission.name];
 
 			return {
 				permissionId,

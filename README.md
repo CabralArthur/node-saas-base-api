@@ -18,5 +18,7 @@ User Permissions Database Diagram:
 - [x] **Subscription Flow**: Design and implement the subscription flow, including plan selection, payment processing, and subscription management.
     - [x] **System Integration**
     - [x] **Stripe Integration**
-- [ ] S3 Upload
-- [ ] Open AI Integration
+    - [x] **Subscription Management**
+- [x] **User Management**
+- [x] **Team Management**
+- [x] **Team Switch**

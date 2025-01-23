@@ -83,4 +83,9 @@ export default class Subscription extends BaseModel {
 			]
 		});
 	}
+
+	static associate(models) {
+		this.belongsTo(models.plan, { foreignKey: 'plan_id', as: 'plan' });
+		this.hasMany(models.payment, { foreignKey: 'subscription_id', as: 'payments' });
+	}
 }

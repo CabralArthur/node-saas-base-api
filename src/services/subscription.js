@@ -2,6 +2,8 @@ import Stripe from 'stripe';
 import { Subscription } from '@models';
 import { DEFAULT_PLAN } from '@constants/subscription';
 import config from '../config/config';
+import { ExceptionUtils } from '@utils';
+import dayjs from 'dayjs';
 
 export default class SubscriptionService {
 	constructor() { }
@@ -33,15 +35,78 @@ export default class SubscriptionService {
 		return await Subscription.findOne({ where: { teamId }, attributes: ['status', 'createdAt', ...(options.extraAttributes || [])] }, { raw: true });
 	}
 
-	async checkout(teamId) {
+	async cancel(teamId) {
+		const subscription = await Subscription.findOne({
+			where: {
+				team_id: teamId,
+				status: 'ACTIVE',
+			}
+		});
+
+		if (!subscription || !subscription.stripeSubscriptionId) {
+			throw new ExceptionUtils({
+				message: 'Subscription not found',
+				code: 'SUBSCRIPTION_NOT_FOUND',
+				status: 400
+			});
+		}
+
+		const stripe = new Stripe(config.stripe.apiKey);
+		await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+			cancel_at_period_end: true
+		});
+
+		await subscription.update({
+			status: 'CANCELED',
+			canceledAt: dayjs().format('YYYY-MM-DD HH:mm:ss')
+		});
+
+		return true;
+	}
+
+	async renew(teamId) {
+		const subscription = await Subscription.findOne({
+			where: {
+				team_id: teamId,
+				status: 'CANCELED',
+			}
+		});
+
+		if (!subscription || !subscription.stripeSubscriptionId) {
+			throw new ExceptionUtils({
+				message: 'Subscription not found',
+				code: 'SUBSCRIPTION_NOT_FOUND',
+				status: 400
+			});
+		}
+
+		const stripe = new Stripe(config.stripe.apiKey);
+
+		await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+			cancel_at_period_end: false
+		});
+
+		return true;
+	}
+
+	async checkout(teamId, data) {
+		const { planModel } = data;
 		const stripe = new Stripe(config.stripe.apiKey);
 		const subscription = await this.getSubscription(teamId, { extraAttributes: ['stripeCustomerId'] });
 
+		if (subscription.status === 'ACTIVE') {
+			throw new ExceptionUtils({
+				message: 'Subscription already exists',
+				code: 'SUBSCRIPTION_ALREADY_EXISTS',
+				status: 400
+			});
+		}
+
 		const session = await stripe.checkout.sessions.create({
 			customer: subscription.stripeCustomerId,
-			success_url: `${config.client.baseUrl}/checkout-success`,
-			cancel_url: `${config.client.baseUrl}/checkout-cancel`,
-			line_items: [{ price: DEFAULT_PLAN.stripeId, quantity: 1 }],
+			success_url: `${config.client.baseUrl}/team/settings`,
+			cancel_url: `${config.client.baseUrl}/team/settings`,
+			line_items: [{ price: config.stripe[planModel], quantity: 1 }],
 			mode: 'subscription',
 		});
 

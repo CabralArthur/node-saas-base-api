@@ -8,6 +8,7 @@ import UserPermission from './user-permission';
 import Permission from './permission';
 import PermissionModule from './permission-module';
 import UserRecoverPassword from './user-recover-password';
+import Payment from './payment';
 
 export {
 	Team,
@@ -19,5 +20,6 @@ export {
 	UserPermission,
 	Permission,
 	PermissionModule,
-	UserRecoverPassword
+	UserRecoverPassword,
+	Payment
 };
