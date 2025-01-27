@@ -7,6 +7,7 @@ import { UpdateUserDto } from '../dtos/update-user.dto';
 import { ParsedUserInfo } from '../interfaces/user.interface';
 import { Member } from '../../team/entities/member.entity';
 import { ActiveUser } from '../../auth/interfaces/active-user.interface';
+import { hash, compare } from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -150,7 +151,13 @@ export class UserService {
 
     try {
       const userToUpdate = await this.userRepository.findOne({
-        where: { id, deletedAt: null }
+        where: { id, deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          password: true
+        }
       });
 
       if (!userToUpdate) {
@@ -158,7 +165,7 @@ export class UserService {
       }
 
       // If updating email, check if it's already taken
-      if (updateUserDto.email && updateUserDto.email !== userToUpdate.email) {
+    if (updateUserDto.email && updateUserDto.email !== userToUpdate.email) {
         const existingUser = await this.userRepository.findOne({
           where: { email: updateUserDto.email, deletedAt: null }
         });
@@ -168,8 +175,38 @@ export class UserService {
         }
       }
 
+      if (updateUserDto.new_password && updateUserDto.confirm_new_password) {
+        if (updateUserDto.new_password !== updateUserDto.confirm_new_password) {
+          throw new HttpException('New password and confirm new password do not match', HttpStatus.CONFLICT);
+        }
+      }
+
+      if (updateUserDto.new_password) {
+        const isValidPassword = await compare(updateUserDto.password, userToUpdate.password);
+
+        if (!isValidPassword) {
+            throw new HttpException('Invalid password', HttpStatus.CONFLICT);
+        }
+
+        const hashedPassword = await hash(updateUserDto.new_password, 10);
+        updateUserDto.password = hashedPassword;
+      }
+
+      const data = {
+        name: updateUserDto.name,
+        email: updateUserDto.email
+      } as {
+        name: string;
+        email: string;
+        password?: string;
+      };
+
+      if (updateUserDto.new_password) {
+        data.password = updateUserDto.password;
+      }
+
       // Update user
-      await queryRunner.manager.update(User, id, updateUserDto);
+      await queryRunner.manager.update(User, id, data);
 
       await queryRunner.commitTransaction();
       return true;

@@ -28,4 +28,22 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   password?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description: 'New password',
+  })
+  @IsString()
+  @IsOptional()
+  new_password?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description: 'Confirm new password',
+  })
+  @IsString()
+  @IsOptional()
+  confirm_new_password?: string;
 } 
