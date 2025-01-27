@@ -41,8 +41,7 @@ export class AuthService {
       {
         id: user.id,
         name: user.name,
-        email: user.email,
-        walletId: user.wallets[0].id,
+        email: user.email
       } as ActiveUser,
       {
         expiresIn: configuration.jwt.ttl,

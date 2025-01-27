@@ -21,6 +21,10 @@ import configuration from 'src/config/configuration';
       port: configuration.database.master.port,
       username: configuration.database.master.username,
       password: configuration.database.master.password,
+      ssl: {
+        rejectUnauthorized: false
+      },
+      synchronize: false,
     }),
   ],
 })
