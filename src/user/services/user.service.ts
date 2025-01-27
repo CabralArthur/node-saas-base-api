@@ -29,6 +29,7 @@ export class UserService {
         email,
       },
       select: {
+        name: true,
         id: true,
         email: true,
         password: true,

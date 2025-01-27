@@ -111,22 +111,72 @@ export class AuthService {
       );
     }
 
-    // Get user's active team
-    const member = await this.memberRepository.findOne({
+    // Check if user has any team where they are admin
+    const adminMembership = await this.memberRepository.findOne({
       where: {
         userId: user.id,
+        role: 'ADMIN',
         deletedAt: null
-      },
-      order: {
-        createdAt: 'DESC'
       }
     });
 
-    if (!member) {
-      throw new HttpException(
-        'User has no team membership',
-        HttpStatus.UNAUTHORIZED,
-      );
+    let activeTeam;
+
+    if (!adminMembership) {
+      // Create a personal team for the user
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        // Create team
+        const team = queryRunner.manager.create(Team, {
+          name: `${user.name}'s Team`,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        
+        const createdTeam = await queryRunner.manager.save(Team, team);
+
+        // Create team membership
+        const member = queryRunner.manager.create(Member, {
+          userId: user.id,
+          teamId: createdTeam.id,
+          role: 'ADMIN',
+        });
+
+        await queryRunner.manager.save(Member, member);
+        await queryRunner.commitTransaction();
+
+        activeTeam = createdTeam;
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
+    } else {
+      // Get user's most recent team membership
+      const member = await this.memberRepository.findOne({
+        where: {
+          userId: user.id,
+          deletedAt: null
+        },
+        order: {
+          createdAt: 'DESC'
+        }
+      });
+
+      if (!member) {
+        throw new HttpException(
+          'User has no team membership',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      activeTeam = await this.teamRepository.findOne({
+        where: { id: member.teamId }
+      });
     }
 
     const accessToken = await this.jwtService.signAsync(
@@ -134,7 +184,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        activeTeamId: member.teamId
+        activeTeamId: activeTeam.id
       },
       {
         expiresIn: this.configService.get('JWT_ACCESS_TOKEN_TTL'),
