@@ -28,14 +28,17 @@ export class User {
   @Column({ select: false })
   password: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @Column({ name: 'active_team_id', nullable: true })
+  activeTeamId: number;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @DeleteDateColumn()
-  deleted_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt: Date;
 
   @BeforeInsert()
   async hashPassword() {

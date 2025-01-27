@@ -1,0 +1,24 @@
+Nest.js Backend app
+## Tech Stack:
+
+- Backend: Node.js with Nest.js
+- Database: PostgreSQL with TypeORM
+- Authentication: JSON Web Tokens (JWT)
+
+## Workflow setup
+
+- Use npm when adding dependencies
+- Be mindful if dependencies are for development and use the appropriate flags
+
+## Coding Standards
+
+- Use TypeScript for all new code
+- Use proper TypeScript types for all variables, functions and return types
+- Implement proper error handling and input validation
+- Always use relative imports
+
+## Best Practices
+
+- Ensure secure, efficient code following RESTful API best practices
+- Respect SOLID principles
+- Focus on performance and readability

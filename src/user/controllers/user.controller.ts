@@ -1,72 +1,83 @@
-import { Controller, Body, Post, Get, Param } from '@nestjs/common';
+import { 
+  Controller, 
+  Body, 
+  Post, 
+  Get, 
+  Put,
+  Delete,
+  Param, 
+  UseGuards,
+  Query
+} from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
-import { Public } from '../../auth/decorators/public.decorator';
+import { UpdateUserDto } from '../dtos/update-user.dto';
 import { AuthUser } from '../../auth/decorators/auth-user.decorator';
 import { ActiveUser } from '../../auth/interfaces/active-user.interface';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RequestResetPasswordDto } from '../dtos/request-reset-password.dto';
-import { ResetPasswordDto } from '../dtos/reset-password.dto';
+import { AdminGuard } from '../../auth/guards/admin.guard';
+import { SelfOrAdminGuard } from '../../auth/guards/self-or-admin.guard';
 
 @Controller('user')
 @ApiTags('User Routes')
+@ApiBearerAuth()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @Public()
+  @UseGuards(AdminGuard)
   @ApiResponse({
     status: 200,
     description: 'User created successfully',
   })
-  async create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto, @AuthUser() user: ActiveUser) {
+    return this.userService.create({
+      ...createUserDto,
+      logged_user_id: user.id
+    });
   }
 
-  @Get('/info')
-  @ApiBearerAuth()
+  @Get()
+  @UseGuards(AdminGuard)
   @ApiResponse({
     status: 200,
-    description: 'User information',
+    description: 'List all users',
   })
-  @ApiBearerAuth()
-  async getInfo(@AuthUser() user: ActiveUser) {
-    return this.userService.findById(user.id);
+  async findAll(@AuthUser() user: ActiveUser) {
+    return this.userService.findAll(user.activeTeamId);
   }
 
-  @Post('/request-reset-password')
-  @Public()
+  @Get(':id')
+  @UseGuards(SelfOrAdminGuard)
   @ApiResponse({
     status: 200,
-    description: 'Password reset requested successfully',
+    description: 'Get user information',
   })
-  async requestResetPassword(@Body() requestResetPasswordDto: RequestResetPasswordDto) {
-    return this.userService.requestResetPassword(requestResetPasswordDto);
+  async findOne(@Param('id') id: string) {
+    return this.userService.findById(parseInt(id));
   }
 
-  @Get('/validate-reset-password/:token')
-  @Public()
+  @Put(':id')
+  @UseGuards(SelfOrAdminGuard)
   @ApiResponse({
     status: 200,
-    description: 'Password reset token is valid',
+    description: 'User updated successfully',
   })
-  async validateResetPassword(@Param('token') token: string) {
-    return this.userService.validateResetPassword(token);
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @AuthUser() user: ActiveUser
+  ) {
+    return this.userService.update(parseInt(id), updateUserDto, user);
   }
 
-  @Post('/reset-password')
-  @Public()
+  @Delete(':id')
+  @UseGuards(AdminGuard)
   @ApiResponse({
     status: 200,
-    description: 'Password reset successfully',
+    description: 'User deleted successfully',
   })
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return this.userService.resetPassword(resetPasswordDto);
-  }
-
-  @Get('/validate-recover-password/:token')
-  @Public()
-  async validateRecoverPassword(@Param('token') token: string) {
-    return this.userService.validateResetPassword(token);
+  async remove(@Param('id') id: string, @AuthUser() user: ActiveUser) {
+    return this.userService.remove(parseInt(id), user.activeTeamId);
   }
 }

@@ -3,17 +3,13 @@ import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { UserRecoverPassword } from './entities/user-recover-password.entity';
-import { EmailModule } from '../email/email.module';
-import { EmailService } from 'src/email/email.service';
-import { ConfigService } from '@nestjs/config';
+import { Member } from '../team/entities/member.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserRecoverPassword]),
-    EmailModule
+    TypeOrmModule.forFeature([User, Member])
   ],
-  providers: [UserService, EmailService, ConfigService],
+  providers: [UserService],
   controllers: [UserController],
   exports: [UserService],
 })

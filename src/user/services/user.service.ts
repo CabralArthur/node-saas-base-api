@@ -3,23 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { Repository, DataSource } from 'typeorm';
 import { CreateUserDto } from '../dtos/create-user.dto';
+import { UpdateUserDto } from '../dtos/update-user.dto';
 import { ParsedUserInfo } from '../interfaces/user.interface';
-import { ResetPasswordDto } from '../dtos/reset-password.dto';
-import { RequestResetPasswordDto } from '../dtos/request-reset-password.dto';
-import { UserRecoverPassword } from '../entities/user-recover-password.entity';
-import { EmailService, EmailOptions } from '../../email/email.service';
-import * as randomKey from 'random-key';
-import { hash } from 'bcrypt';
-import { ConfigService } from '@nestjs/config';
+import { Member } from '../../team/entities/member.entity';
+import { ActiveUser } from '../../auth/interfaces/active-user.interface';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-    @InjectRepository(UserRecoverPassword) private userRecoverPasswordRepository: Repository<UserRecoverPassword>,
+    @InjectRepository(Member) private memberRepository: Repository<Member>,
     private dataSource: DataSource,
-    private emailService: EmailService,
-    private configService: ConfigService,
   ) {}
 
   async findByEmail(email: string) {
@@ -63,68 +57,68 @@ export class UserService {
   }
 
   async create(userToCreate: CreateUserDto) {
-    const userExists = await this.findByEmail(userToCreate.email);
-
-    if (userExists) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const user = queryRunner.manager.create(User, userToCreate);
-      await queryRunner.manager.save(User, user);
-
-      await queryRunner.commitTransaction();
-
-      return true;
-    } catch {
-      await queryRunner.rollbackTransaction();
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async requestResetPassword(requestResetPasswordDto: RequestResetPasswordDto) {
-    const { email } = requestResetPasswordDto;
-    const user = await this.findByEmail(email);
-
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const token = randomKey.generate(32);
-
-      const recoverPassword = this.userRecoverPasswordRepository.create({
-        used: false,
-        token,
-        userId: user.id
+      // Check if user exists
+      let user = await this.userRepository.findOne({
+        where: {
+          email: userToCreate.email,
+          deletedAt: null
+        }
       });
 
-      await queryRunner.manager.save(recoverPassword);
+      // If user exists and team_id is provided, check team membership
+      if (user && userToCreate.team_id) {
+        const existingMember = await this.memberRepository.findOne({
+          where: {
+            teamId: userToCreate.team_id,
+            userId: user.id,
+            deletedAt: null
+          }
+        });
 
-      const baseUrl = this.configService.get('CLIENT_BASE_URL') || 'http://localhost:3000';
-      const link = `${baseUrl}/reset-password/${token}`;
+        if (existingMember) {
+          throw new HttpException('User is already a member of this team', HttpStatus.CONFLICT);
+        }
+      }
 
-      const emailOptions: EmailOptions = {
-        to: user.email,
-        from: this.configService.get('EMAIL_FROM') || 'noreply@example.com',
-        subject: 'Password Reset Request',
-        text: `To reset your password, click on the link: ${link}`,
-        html: `To reset your password, click on the link: <a href="${link}">Reset Password</a>`
-      };
+      // If user doesn't exist, create one
+      if (!user) {
+        user = queryRunner.manager.create(User, {
+          name: userToCreate.name,
+          email: userToCreate.email,
+          password: userToCreate.password,
+          activeTeamId: userToCreate.team_id
+        });
+        
+        user = await queryRunner.manager.save(User, user);
+      }
 
-      await this.emailService.send(emailOptions);
+      // If team_id is provided, create team membership
+      if (userToCreate.team_id) {
+        // Check if this is the first member of the team
+        const teamMemberCount = await this.memberRepository.count({
+          where: {
+            teamId: userToCreate.team_id,
+            deletedAt: null
+          }
+        });
+
+        const member = queryRunner.manager.create(Member, {
+          teamId: userToCreate.team_id,
+          userId: user.id,
+          role: teamMemberCount === 0 ? 'admin' : 'member',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
+        await queryRunner.manager.save(Member, member);
+      }
+
       await queryRunner.commitTransaction();
-
       return true;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -134,43 +128,94 @@ export class UserService {
     }
   }
 
-  async validateResetPassword(token: string, returnData = false): Promise<UserRecoverPassword | true> {
-    const userRecoverPassword = await this.userRecoverPasswordRepository.findOne({
+  async findAll(teamId: number) {
+    const members = await this.memberRepository.find({
       where: {
-        token,
-        used: false
-      }
+        teamId,
+        deletedAt: null
+      },
+      relations: ['user']
     });
 
-    if (!userRecoverPassword) {
-      throw new HttpException('Invalid token', HttpStatus.NOT_FOUND);
-    }
-
-    if (!returnData) {
-      return true;
-    }
-
-    return userRecoverPassword;
+    return members.map(member => ({
+      id: member.user.id,
+      name: member.user.name,
+      email: member.user.email,
+      role: member.role
+    }));
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const { token, password } = resetPasswordDto;
-    const userRecoverPassword = await this.validateResetPassword(token, true) as UserRecoverPassword;
-
+  async update(id: number, updateUserDto: UpdateUserDto, user: ActiveUser) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      await queryRunner.manager.update(User, 
-        { id: userRecoverPassword.userId },
-        { password: password }
-      );
+      const userToUpdate = await this.userRepository.findOne({
+        where: { id, deletedAt: null }
+      });
 
-      await queryRunner.manager.update(UserRecoverPassword,
-        { id: userRecoverPassword.id },
-        { used: true }
-      );
+      if (!userToUpdate) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // If updating email, check if it's already taken
+      if (updateUserDto.email && updateUserDto.email !== userToUpdate.email) {
+        const existingUser = await this.userRepository.findOne({
+          where: { email: updateUserDto.email, deletedAt: null }
+        });
+
+        if (existingUser) {
+          throw new HttpException('Email already in use', HttpStatus.CONFLICT);
+        }
+      }
+
+      // Update user
+      await queryRunner.manager.update(User, id, updateUserDto);
+
+      await queryRunner.commitTransaction();
+      return true;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async remove(id: number, teamId: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const member = await this.memberRepository.findOne({
+        where: {
+          userId: id,
+          teamId,
+          deletedAt: null
+        }
+      });
+
+      if (!member) {
+        throw new HttpException('User not found in team', HttpStatus.NOT_FOUND);
+      }
+
+      // Soft delete member
+      await queryRunner.manager.update(Member, { id: member.id }, { deletedAt: new Date() });
+
+      // If user has no other active team memberships, soft delete user
+      const otherMemberships = await this.memberRepository.count({
+        where: {
+          userId: id,
+          deletedAt: null,
+          id: member.id
+        }
+      });
+
+      if (otherMemberships === 0) {
+        await queryRunner.manager.update(User, id, { deletedAt: new Date() });
+      }
 
       await queryRunner.commitTransaction();
       return true;
