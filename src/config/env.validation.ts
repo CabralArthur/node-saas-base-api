@@ -74,6 +74,18 @@ class EnvironmentVariables {
   @IsNumber()
   @Min(1000)
   JWT_ACCESS_TOKEN_TTL: number;
+
+  @IsString()
+  @IsNotEmpty()
+  SENDGRID_API_KEY: string;
+
+  @IsString()
+  @IsNotEmpty()
+  EMAIL_FROM: string;
+
+  @IsString()
+  @IsNotEmpty()
+  CLIENT_BASE_URL: string;
 }
 
 export function validate(config: Record<string, unknown>) {

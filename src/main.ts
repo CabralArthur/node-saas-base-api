@@ -17,7 +17,7 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Saldoo API')
+    .setTitle('NodeJS Base API')
     .setVersion('1.0')
     .build();
 
