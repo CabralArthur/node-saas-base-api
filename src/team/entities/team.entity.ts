@@ -16,12 +16,6 @@ export class Team {
   @Column()
   name: string;
 
-  @Column({ name: 'default_domain' })
-  defaultDomain: string;
-
-  @Column({ name: 'owner_id' })
-  ownerId: number;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

@@ -3,9 +3,9 @@ import { LoginDto } from '../dtos/login.dto';
 import { AuthService } from '../services/auth.service';
 import { Public } from '../decorators/public.decorator';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RequestResetPasswordDto } from '../../user/dtos/request-reset-password.dto';
-import { ResetPasswordDto } from '../../user/dtos/reset-password.dto';
-
+import { RequestResetPasswordDto } from '../dtos/request-reset-password.dto';
+import { ResetPasswordDto } from '../dtos/reset-password.dto';
+import { RegisterDto } from '../dtos/register.dto';
 @Controller('auth')
 @ApiTags('Auth Routes')
 export class AuthController {
@@ -20,6 +20,24 @@ export class AuthController {
   })
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('register')
+  @Public()
+  @ApiResponse({
+    status: 200,
+    description: 'User registered successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Passwords do not match',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid user information',
+  })
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 
   @Post('request-reset-password')

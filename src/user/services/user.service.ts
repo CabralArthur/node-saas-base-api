@@ -110,7 +110,7 @@ export class UserService {
         const member = queryRunner.manager.create(Member, {
           teamId: userToCreate.team_id,
           userId: user.id,
-          role: teamMemberCount === 0 ? 'admin' : 'member',
+          role: teamMemberCount === 0 ? 'ADMIN' : 'MEMBER',
           createdAt: new Date(),
           updatedAt: new Date()
         });

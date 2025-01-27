@@ -13,13 +13,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserRecoverPassword } from '../user/entities/user-recover-password.entity';
 import { EmailModule } from '../email/email.module';
 import { Member } from '../team/entities/member.entity';
+import { Team } from '../team/entities/team.entity';
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
     EmailModule,
-    TypeOrmModule.forFeature([UserRecoverPassword, Member]),
+    TypeOrmModule.forFeature([UserRecoverPassword, Member, Team]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -40,6 +41,7 @@ import { Member } from '../team/entities/member.entity';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
+    ConfigService,
     JwtStrategy,
   ],
   exports: [AuthService],

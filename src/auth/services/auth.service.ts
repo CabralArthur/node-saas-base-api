@@ -4,15 +4,18 @@ import { compare, hash } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
 import { LoginDto } from '../dtos/login.dto';
-import { RequestResetPasswordDto } from '../../user/dtos/request-reset-password.dto';
-import { ResetPasswordDto } from '../../user/dtos/reset-password.dto';
+import { RegisterDto } from '../dtos/register.dto';
+import { RequestResetPasswordDto } from '../dtos/request-reset-password.dto';
+import { ResetPasswordDto } from '../dtos/reset-password.dto';
 import { UserService } from '../../user/services/user.service';
 import { ConfigService } from '@nestjs/config';
 import { EmailService, EmailOptions } from '../../email/email.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { UserRecoverPassword } from '../../user/entities/user-recover-password.entity';
 import { Member } from '../../team/entities/member.entity';
+import { Team } from '../../team/entities/team.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -21,11 +24,70 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
+    private readonly dataSource: DataSource,
     @InjectRepository(UserRecoverPassword)
     private userRecoverPasswordRepository: Repository<UserRecoverPassword>,
     @InjectRepository(Member)
     private memberRepository: Repository<Member>,
+    @InjectRepository(Team)
+    private teamRepository: Repository<Team>,
   ) {}
+
+  async register(registerDto: RegisterDto) {
+    const { name, email, password, confirm_password } = registerDto;
+
+    if (password !== confirm_password) {
+      throw new HttpException('Passwords do not match', HttpStatus.BAD_REQUEST);
+    }
+
+    const existingUser = await this.userService.findByEmail(email);
+
+    if (existingUser) {
+      throw new HttpException('Invalid user information', HttpStatus.UNAUTHORIZED);
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Create team
+      const team = queryRunner.manager.create(Team, {
+        name: `${name}'s Team`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      const createdTeam = await queryRunner.manager.save(Team, team);
+
+      // Create user
+      const user = queryRunner.manager.create(User, {
+        name,
+        email,
+        password,
+        activeTeamId: createdTeam.id,
+      });
+
+      const createdUser = await queryRunner.manager.save(User, user);
+
+      // Create team membership
+      const member = queryRunner.manager.create(Member, {
+        userId: createdUser.id,
+        teamId: createdTeam.id,
+        role: 'ADMIN',
+      });
+
+      await queryRunner.manager.save(Member, member);
+
+      await queryRunner.commitTransaction();
+      return true;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
@@ -33,7 +95,6 @@ export class AuthService {
     const user = await this.userService.findUserByEmail(email);
 
     if (!user) {
-      await hash(randomKey.generate(8), 10); // avoid user enumerate
       throw new HttpException(
         'Wrong credentials provided',
         HttpStatus.UNAUTHORIZED,

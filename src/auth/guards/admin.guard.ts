@@ -22,7 +22,7 @@ export class AdminGuard implements CanActivate {
       where: {
         userId: user.id,
         teamId: user.activeTeamId,
-        role: 'admin',
+        role: 'ADMIN',
         deletedAt: null
       }
     });
