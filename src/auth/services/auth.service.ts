@@ -17,6 +17,7 @@ import { Member } from '../../team/entities/member.entity';
 import { Team } from '../../team/entities/team.entity';
 import { User } from '../../user/entities/user.entity';
 import { SwitchTeamDto } from '../dtos/switch-team.dto';
+import { SubscriptionService } from '../../subscription/services/subscription.service';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly dataSource: DataSource,
+    private readonly subscriptionService: SubscriptionService,
     @InjectRepository(UserRecoverPassword)
     private userRecoverPasswordRepository: Repository<UserRecoverPassword>,
     @InjectRepository(Member)
@@ -79,6 +81,14 @@ export class AuthService {
       });
 
       await queryRunner.manager.save(Member, member);
+
+      // Create subscription
+      await this.subscriptionService.subscribeTrial({
+        email,
+        name,
+        userId: createdUser.id,
+        teamId: createdTeam.id,
+      });
 
       await queryRunner.commitTransaction();
       return true;
@@ -146,8 +156,16 @@ export class AuthService {
         });
 
         await queryRunner.manager.save(Member, member);
-        await queryRunner.commitTransaction();
 
+        // Create subscription
+        await this.subscriptionService.subscribeTrial({
+          email: user.email,
+          name: user.name,
+          userId: user.id,
+          teamId: createdTeam.id,
+        });
+
+        await queryRunner.commitTransaction();
         activeTeam = createdTeam;
       } catch (error) {
         await queryRunner.rollbackTransaction();

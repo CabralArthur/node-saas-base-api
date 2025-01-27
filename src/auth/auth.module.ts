@@ -14,12 +14,14 @@ import { UserRecoverPassword } from '../user/entities/user-recover-password.enti
 import { EmailModule } from '../email/email.module';
 import { Member } from '../team/entities/member.entity';
 import { Team } from '../team/entities/team.entity';
+import { SubscriptionModule } from '../subscription/subscription.module';
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
     EmailModule,
+    SubscriptionModule,
     TypeOrmModule.forFeature([UserRecoverPassword, Member, Team]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
