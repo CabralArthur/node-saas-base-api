@@ -6,6 +6,10 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestResetPasswordDto } from '../dtos/request-reset-password.dto';
 import { ResetPasswordDto } from '../dtos/reset-password.dto';
 import { RegisterDto } from '../dtos/register.dto';
+import { SwitchTeamDto } from '../dtos/switch-team.dto';
+import { AuthUser } from '../decorators/auth-user.decorator';
+import { ActiveUser } from '../interfaces/active-user.interface';
+
 @Controller('auth')
 @ApiTags('Auth Routes')
 export class AuthController {
@@ -38,6 +42,19 @@ export class AuthController {
   })
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
+  }
+
+  @Post('switch-team')
+  @ApiResponse({
+    status: 200,
+    description: 'Team switched successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'User is not a member of this team',
+  })
+  async switchTeam(@Body() switchTeamDto: SwitchTeamDto, @AuthUser() user: ActiveUser) {
+    return this.authService.switchTeam(user.id, switchTeamDto);
   }
 
   @Post('request-reset-password')

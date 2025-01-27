@@ -16,6 +16,7 @@ import { UserRecoverPassword } from '../../user/entities/user-recover-password.e
 import { Member } from '../../team/entities/member.entity';
 import { Team } from '../../team/entities/team.entity';
 import { User } from '../../user/entities/user.entity';
+import { SwitchTeamDto } from '../dtos/switch-team.dto';
 
 @Injectable()
 export class AuthService {
@@ -213,5 +214,43 @@ export class AuthService {
     await this.userRecoverPasswordRepository.update(userRecoverPassword.id, { used: true });
 
     return true;
+  }
+
+  async switchTeam(userId: number, switchTeamDto: SwitchTeamDto) {
+    const { team_id } = switchTeamDto;
+
+    // Check if user is a member of the team
+    const member = await this.memberRepository.findOne({
+      where: {
+        userId,
+        teamId: team_id,
+        deletedAt: null
+      }
+    });
+
+    if (!member) {
+      throw new HttpException('User is not a member of this team', HttpStatus.FORBIDDEN);
+    }
+
+    // Get user data
+    const user = await this.userService.findById(userId);
+
+    // Generate new token with updated activeTeamId
+    const accessToken = await this.jwtService.signAsync(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        activeTeamId: team_id
+      },
+      {
+        expiresIn: this.configService.get('JWT_ACCESS_TOKEN_TTL'),
+        privateKey: this.configService.get('JWT_PRIVATE_KEY'),
+      },
+    );
+
+    return {
+      accessToken,
+    };
   }
 }
