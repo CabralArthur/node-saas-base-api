@@ -36,9 +36,10 @@ export class UserService {
   }
 
   async findById(id: number) {
-    const userInfo = await this.userRepository.findOneOrFail({
+    const userInfo = await this.userRepository.findOne({
       where: {
-        id
+        id,
+        deletedAt: null
       },
       select: {
         id: true,
@@ -46,6 +47,10 @@ export class UserService {
         email: true,
       }
     });
+
+    if (!userInfo) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
 
     const parsedUserInfo = {
       id: userInfo.id,
@@ -99,18 +104,10 @@ export class UserService {
 
       // If team_id is provided, create team membership
       if (userToCreate.team_id) {
-        // Check if this is the first member of the team
-        const teamMemberCount = await this.memberRepository.count({
-          where: {
-            teamId: userToCreate.team_id,
-            deletedAt: null
-          }
-        });
-
         const member = queryRunner.manager.create(Member, {
           teamId: userToCreate.team_id,
           userId: user.id,
-          role: teamMemberCount === 0 ? 'ADMIN' : 'MEMBER',
+          role: 'MEMBER',
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -119,6 +116,7 @@ export class UserService {
       }
 
       await queryRunner.commitTransaction();
+
       return true;
     } catch (error) {
       await queryRunner.rollbackTransaction();

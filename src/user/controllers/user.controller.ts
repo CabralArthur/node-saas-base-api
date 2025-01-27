@@ -33,7 +33,9 @@ export class UserController {
   async create(@Body() createUserDto: CreateUserDto, @AuthUser() user: ActiveUser) {
     return this.userService.create({
       ...createUserDto,
-      logged_user_id: user.id
+      logged_user_id: user.id,
+      team_id: user.activeTeamId,
+      role: 'MEMBER'
     });
   }
 

@@ -39,6 +39,15 @@ export class CreateUserDto {
   team_id?: number;
 
   @ApiProperty({
+    type: String,
+    required: false,
+    description: 'User role',
+  })
+  @IsString()
+  @IsOptional()
+  role?: string;
+
+  @ApiProperty({
     type: Number,
     required: false,
     description: 'Logged user ID',
